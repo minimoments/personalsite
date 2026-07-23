@@ -24,8 +24,10 @@ window.SITE_DATA = window.SITE_DATA || {};
 SITE_DATA.projects = {
   eyebrow: "项目",
   heading: "精选项目",
+  pageHeading: "全部项目",
   moreText: "查看更多项目 →",
-  moreUrl: "#", // “查看更多项目”指向的地址
+  moreUrl: "projects.html", // “查看更多项目”指向的地址
+  featuredLimit: 6,         // 首页精选项目最多显示几个；超过则显示“查看更多项目”
 
   items: [
     {
@@ -75,6 +77,22 @@ SITE_DATA.projects = {
       link: "#",
       placeholder: true,
       media: { type: "images", sources: ["assets/projects/t3.png", "assets/projects/t6.png", "assets/projects/t7.png"] }
+    },
+    {
+      title: "关卡编辑器 Pro",
+      tags: "Unity · Editor Tool · Odin",
+      outcome: "可视化关卡流程编辑工具，支持节点图配置与运行时热重载，策划工作效率提升 3 倍。",
+      link: "#",
+      placeholder: true,
+      media: { type: "images", sources: ["assets/projects/t1.png", "assets/projects/t4.png"] }
+    },
+    {
+      title: "实时对战服务端",
+      tags: "Go · gRPC · Kubernetes",
+      outcome: "无状态战斗房间服务，支持水平扩容，峰值承载 5000 同时在线对局。",
+      link: "#",
+      placeholder: true,
+      media: { type: "video", src: "assets/projects/demo.mp4", poster: "assets/projects/t5.png" }
     }
   ]
 };

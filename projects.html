@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="theme-dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>全部项目</title>
+  <meta name="description" content="陈屿的全部项目作品：Unity 客户端、服务端与工具开发。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Geist+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- 项目列表页：app.js 会根据 data-page="projects" 渲染全部项目 -->
+  <main id="app" data-page="projects"></main>
+
+  <!-- 数据模块 -->
+  <script src="data/profile.js"></script>
+  <script src="data/about.js"></script>
+  <script src="data/skills.js"></script>
+  <script src="data/experience.js"></script>
+  <script src="data/projects.js"></script>
+  <script src="data/contact.js"></script>
+
+  <!-- 渲染与交互逻辑 -->
+  <script src="app.js"></script>
+
+</body>
+</html>

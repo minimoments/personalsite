@@ -10,6 +10,37 @@
     });
   }
 
+  /* ---------- HEADER ---------- */
+  function renderHeader(p, opts) {
+    opts = opts || {};
+    var home = opts.homeLink || "";
+    var base = home.split("#")[0] || "";
+
+    var nav = p.nav.map(function (n) {
+      var href = home
+        ? (n.id === "top" ? base : base + "#" + n.id)
+        : "#" + n.id;
+      return '<a href="' + esc(href) + '">' + esc(n.label) + "</a>";
+    }).join("");
+
+    var themeBtn =
+      '<button class="theme-toggle" type="button" aria-label="切换主题" title="切换主题">' +
+        '<svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' +
+        '<svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>' +
+      "</button>";
+
+    return (
+      '<nav class="header">' +
+        '<div class="wordmark">' + esc(p.wordmark) + "</div>" +
+        '<div class="nav">' + nav + "</div>" +
+        '<div class="header-actions">' +
+          themeBtn +
+          '<a href="' + esc(p.resumeUrl) + '" class="header-cta">下载简历</a>' +
+        "</div>" +
+      "</nav>"
+    );
+  }
+
   /* ---------- HERO ---------- */
   var ICONS = {
     play: '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',
@@ -24,31 +55,14 @@
   };
 
   function renderHero(p) {
-    var nav = p.nav.map(function (n) {
-      return '<a href="#' + esc(n.id) + '">' + esc(n.label) + "</a>";
-    }).join("");
-
     var chips = p.hero.techTags.map(function (t) {
       return '<span class="chip">' + esc(t) + "</span>";
     }).join("");
 
-    var themeBtn =
-      '<button class="theme-toggle" type="button" aria-label="切换主题" title="切换主题">' +
-        '<svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' +
-        '<svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>' +
-      "</button>";
-
     return (
       '<header class="hero">' +
         '<div class="wrap">' +
-          '<nav class="header">' +
-            '<div class="wordmark">' + esc(p.wordmark) + "</div>" +
-            '<div class="nav">' + nav + "</div>" +
-            '<div class="header-actions">' +
-              themeBtn +
-              '<a href="' + esc(p.resumeUrl) + '" class="header-cta">下载简历</a>' +
-            "</div>" +
-          "</nav>" +
+          renderHeader(p) +
           '<div class="hero-body">' +
             '<div class="hero-left">' +
               '<div class="eyebrow">' + esc(p.hero.eyebrow) + "</div>" +
@@ -203,24 +217,29 @@
     );
   }
 
-  function renderProjects(pr) {
-    var cards = pr.items.map(function (it) {
-      var isVideo = it.media && it.media.type === "video";
-      var placeholderTag = it.placeholder ? '<span class="proj-placeholder">示例素材</span>' : "";
-      return (
-        '<article class="proj-card' + (isVideo ? " has-video" : " has-images") + '">' +
-          placeholderTag +
-          '<div class="proj-media">' + renderMedia(it.media) + "</div>" +
-          '<a class="proj-text" href="' + esc(it.link || "#") + '">' +
-            '<div class="proj-title">' + esc(it.title) + "</div>" +
-            '<div class="proj-tags">' + esc(it.tags) + "</div>" +
-            '<p class="proj-outcome">' + esc(it.outcome) + "</p>" +
-          "</a>" +
-        "</article>"
-      );
-    }).join("");
+  function renderProjectCard(it) {
+    var isVideo = it.media && it.media.type === "video";
+    var placeholderTag = it.placeholder ? '<span class="proj-placeholder">示例素材</span>' : "";
+    return (
+      '<article class="proj-card' + (isVideo ? " has-video" : " has-images") + '">' +
+        placeholderTag +
+        '<div class="proj-media">' + renderMedia(it.media) + "</div>" +
+        '<a class="proj-text" href="' + esc(it.link || "#") + '">' +
+          '<div class="proj-title">' + esc(it.title) + "</div>" +
+          '<div class="proj-tags">' + esc(it.tags) + "</div>" +
+          '<p class="proj-outcome">' + esc(it.outcome) + "</p>" +
+        "</a>" +
+      "</article>"
+    );
+  }
 
-    var more = pr.moreUrl
+  function renderProjects(pr) {
+    var limit = typeof pr.featuredLimit === "number" ? pr.featuredLimit : pr.items.length;
+    var featured = pr.items.slice(0, limit);
+    var cards = featured.map(renderProjectCard).join("");
+
+    var hasMore = pr.items.length > limit;
+    var more = hasMore && pr.moreUrl
       ? '<a href="' + esc(pr.moreUrl) + '" class="projects-link">' + esc(pr.moreText || "查看更多 →") + "</a>"
       : "";
 
@@ -235,6 +254,30 @@
           more +
         "</div>" +
       "</section>"
+    );
+  }
+
+  function renderProjectsPage(pr, profile) {
+    var allCards = pr.items.map(renderProjectCard).join("");
+    return (
+      '<div class="page-projects">' +
+        '<div class="wrap">' +
+          renderHeader(profile, { homeLink: "index.html" }) +
+        "</div>" +
+        '<main class="projects-main">' +
+          '<div class="section-inner">' +
+            '<div class="sec-header">' +
+              '<div class="sec-eyebrow">' + esc(pr.eyebrow) + "</div>" +
+              '<h2 class="sec-heading">' + esc(pr.pageHeading || pr.heading) + "</h2>" +
+            "</div>" +
+            '<div class="proj-grid">' + allCards + "</div>" +
+            '<div class="projects-page-actions">' +
+              '<a href="index.html" class="btn btn-ghost">← 返回首页</a>' +
+            "</div>" +
+          "</div>" +
+        "</main>" +
+        renderFooter(profile.footer) +
+      "</div>"
     );
   }
 
@@ -520,9 +563,12 @@
   function setupNavScroll() {
     document.querySelectorAll(".nav a").forEach(function (a) {
       a.addEventListener("click", function (e) {
-        var id = a.getAttribute("href").replace("#", "");
+        var href = a.getAttribute("href") || "";
+        // 跨页链接（如 projects.html 中的 index.html#about）交给浏览器处理
+        if (!href.startsWith("#")) return;
+        var id = href.replace("#", "");
         e.preventDefault();
-        if (id === "top") {
+        if (id === "top" || id === "") {
           window.scrollTo({ top: 0, behavior: "smooth" });
           return;
         }
@@ -544,6 +590,18 @@
     document.documentElement.classList.add("theme-" + savedTheme);
 
     if (D.profile.wordmark) document.title = D.profile.wordmark;
+
+    var page = root.getAttribute("data-page");
+
+    if (page === "projects") {
+      document.title = (D.projects.pageHeading || D.projects.heading) + " · " + D.profile.wordmark;
+      root.innerHTML = renderProjectsPage(D.projects, D.profile);
+      setupThemeToggle();
+      setupProjectControls();
+      setupBackToTop();
+      setupNavScroll();
+      return;
+    }
 
     root.innerHTML =
       renderHero(D.profile) +

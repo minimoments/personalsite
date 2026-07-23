@@ -258,6 +258,13 @@ section[id]{scroll-margin-top:80px;}
 .projects-link{font-size:16px;font-weight:500;color:var(--accent);align-self:flex-start;transition:opacity .2s;}
 .projects-link:hover{opacity:.85;}
 
+/* 全部项目独立页 */
+.page-projects{min-height:100vh;display:flex;flex-direction:column;}
+.page-projects > .wrap{padding-top:24px;padding-bottom:24px;}
+.projects-main{flex:1;padding:112px 0 64px;background:var(--bg-light);}
+.page-projects .sec-header{margin-bottom:40px;}
+.projects-page-actions{margin-top:24px;}
+
 /* ============ CONTACT ============ */
 .contact{padding:96px 0 64px;}
 .contact-inner{max-width:var(--maxw);margin:0 auto;padding:0 64px;display:flex;flex-direction:column;gap:40px;}
