@@ -10,11 +10,80 @@
     });
   }
 
+  function editorQs() {
+    try {
+      return new URLSearchParams(location.search).has("editor") ? "?editor" : "";
+    } catch (e) { return ""; }
+  }
+
+  /* ---------- 数据路径工具 ---------- */
+  function parsePath(path) {
+    var tokens = [];
+    var re = /\.?([^\.\[\]]+)|\[(\d+)\]/g;
+    var m;
+    while ((m = re.exec(path)) !== null) {
+      if (m[1] !== undefined) tokens.push({ type: "key", key: m[1] });
+      else if (m[2] !== undefined) tokens.push({ type: "idx", idx: parseInt(m[2], 10) });
+    }
+    return tokens;
+  }
+
+  function getByPath(obj, path) {
+    var tokens = parsePath(path);
+    var cur = obj;
+    for (var i = 0; i < tokens.length; i++) {
+      if (cur == null) return undefined;
+      var t = tokens[i];
+      cur = t.type === "idx" ? cur[t.idx] : cur[t.key];
+    }
+    return cur;
+  }
+
+  function setByPath(obj, path, value) {
+    var tokens = parsePath(path);
+    var cur = obj;
+    for (var i = 0; i < tokens.length - 1; i++) {
+      var t = tokens[i];
+      cur = t.type === "idx" ? cur[t.idx] : cur[t.key];
+      if (cur == null) return;
+    }
+    var last = tokens[tokens.length - 1];
+    if (!last) return;
+    if (last.type === "idx") cur[last.idx] = value;
+    else cur[last.key] = value;
+  }
+
+  function deepClone(obj) {
+    try { return JSON.parse(JSON.stringify(obj)); } catch (e) { return obj; }
+  }
+
+  function removeArrayRoots(obj, rootPaths) {
+    var groups = {};
+    rootPaths.forEach(function (r) {
+      var m = r.match(/\[(\d+)\]$/);
+      if (!m) return;
+      var idx = parseInt(m[1], 10);
+      var base = r.slice(0, r.lastIndexOf("["));
+      if (!groups[base]) groups[base] = [];
+      groups[base].push(idx);
+    });
+    Object.keys(groups).forEach(function (base) {
+      var arr = getByPath(obj, base);
+      if (!Array.isArray(arr)) return;
+      groups[base].sort(function (a, b) { return b - a; });
+      groups[base].forEach(function (idx) {
+        if (idx >= 0 && idx < arr.length) arr.splice(idx, 1);
+      });
+    });
+  }
+
   /* ---------- HEADER ---------- */
   function renderHeader(p, opts) {
     opts = opts || {};
     var home = opts.homeLink || "";
+    var qs = editorQs();
     var base = home.split("#")[0] || "";
+    if (base && qs) base += qs;
 
     var nav = p.nav.map(function (n) {
       var href = home
@@ -35,7 +104,6 @@
         '<div class="nav">' + nav + "</div>" +
         '<div class="header-actions">' +
           themeBtn +
-          '<a href="' + esc(p.resumeUrl) + '" class="header-cta">下载简历</a>' +
         "</div>" +
       "</nav>"
     );
@@ -55,8 +123,8 @@
   };
 
   function renderHero(p) {
-    var chips = p.hero.techTags.map(function (t) {
-      return '<span class="chip">' + esc(t) + "</span>";
+    var chips = p.hero.techTags.map(function (t, i) {
+      return '<span class="chip" data-edit="profile.hero.techTags[' + i + ']" data-edit-root="profile.hero.techTags[' + i + ']">' + esc(t) + "</span>";
     }).join("");
 
     return (
@@ -65,11 +133,11 @@
           renderHeader(p) +
           '<div class="hero-body">' +
             '<div class="hero-left">' +
-              '<div class="eyebrow">' + esc(p.hero.eyebrow) + "</div>" +
-              '<h1 class="name">' + esc(p.hero.name) + "</h1>" +
-              '<div class="role">' + esc(p.hero.role) + "</div>" +
-              '<p class="tagline">' + esc(p.hero.tagline) + "</p>" +
-              '<p class="bio">' + esc(p.hero.bio) + "</p>" +
+              '<div class="eyebrow" data-edit="profile.hero.eyebrow">' + esc(p.hero.eyebrow) + "</div>" +
+              '<h1 class="name" data-edit="profile.hero.name">' + esc(p.hero.name) + "</h1>" +
+              '<div class="role" data-edit="profile.hero.role">' + esc(p.hero.role) + "</div>" +
+              '<p class="tagline" data-edit="profile.hero.tagline">' + esc(p.hero.tagline) + "</p>" +
+              '<p class="bio" data-edit="profile.hero.bio">' + esc(p.hero.bio) + "</p>" +
               '<div class="tech-tags">' + chips + "</div>" +
               '<div class="hero-ctas">' +
                 '<a href="#projects" class="btn btn-primary">查看项目</a>' +
@@ -85,11 +153,12 @@
 
   /* ---------- ABOUT ---------- */
   function renderAbout(a) {
-    var stats = a.stats.map(function (s) {
+    var stats = a.stats.map(function (s, i) {
+      var root = "about.stats[" + i + "]";
       return (
-        '<div class="stat">' +
-          '<div class="stat-num' + (s.mono ? " mono" : "") + '">' + esc(s.num) + "</div>" +
-          '<div class="stat-label">' + esc(s.label) + "</div>" +
+        '<div class="stat" data-edit-root="' + root + '">' +
+          '<div class="stat-num' + (s.mono ? " mono" : "") + '" data-edit="about.stats[' + i + '].num" data-edit-root="' + root + '">' + esc(s.num) + "</div>" +
+          '<div class="stat-label" data-edit="about.stats[' + i + '].label" data-edit-root="' + root + '">' + esc(s.label) + "</div>" +
         "</div>"
       );
     }).join("");
@@ -98,11 +167,11 @@
       '<section id="about" class="section bg-light">' +
         '<div class="section-inner about-inner">' +
           '<div class="about-left">' +
-            '<div class="sec-eyebrow">' + esc(a.eyebrow) + "</div>" +
-            '<h2 class="sec-heading">' + esc(a.heading) + "</h2>" +
+            '<div class="sec-eyebrow" data-edit="about.eyebrow">' + esc(a.eyebrow) + "</div>" +
+            '<h2 class="sec-heading" data-edit="about.heading">' + esc(a.heading) + "</h2>" +
           "</div>" +
           '<div class="about-right">' +
-            '<p class="about-body">' + esc(a.body) + "</p>" +
+            '<p class="about-body" data-edit="about.body">' + esc(a.body) + "</p>" +
             '<div class="stats">' + stats + "</div>" +
           "</div>" +
         "</div>" +
@@ -111,24 +180,28 @@
   }
 
   /* ---------- SKILLS ---------- */
-  function skillCard(c) {
+  function skillCard(c, i) {
+    var root = "skills.cards[" + i + "]";
     return (
-      '<div class="skill-card">' +
-        '<div class="card-label">' + esc(c.label) + "</div>" +
-        '<div class="card-title">' + esc(c.title) + "</div>" +
-        '<div class="card-line">' + esc(c.line) + "</div>" +
+      '<div class="skill-card" data-edit-root="' + root + '">' +
+        '<div class="card-label" data-edit="skills.cards[' + i + '].label" data-edit-root="' + root + '">' + esc(c.label) + "</div>" +
+        '<div class="card-title" data-edit="skills.cards[' + i + '].title" data-edit-root="' + root + '">' + esc(c.title) + "</div>" +
+        '<div class="card-line" data-edit="skills.cards[' + i + '].line" data-edit-root="' + root + '">' + esc(c.line) + "</div>" +
       "</div>"
     );
   }
   function renderSkills(s) {
-    var left = s.cards.slice(0, 2).map(skillCard).join("");
-    var right = s.cards.slice(2).map(skillCard).join("");
+    var left = "", right = "";
+    s.cards.forEach(function (c, i) {
+      var card = skillCard(c, i);
+      if (i < 2) left += card; else right += card;
+    });
     return (
       '<section id="skills" class="section bg-white">' +
         '<div class="section-inner">' +
           '<div class="sec-header">' +
-            '<div class="sec-eyebrow">' + esc(s.eyebrow) + "</div>" +
-            '<h2 class="sec-heading">' + esc(s.heading) + "</h2>" +
+            '<div class="sec-eyebrow" data-edit="skills.eyebrow">' + esc(s.eyebrow) + "</div>" +
+            '<h2 class="sec-heading" data-edit="skills.heading">' + esc(s.heading) + "</h2>" +
           "</div>" +
           '<div class="bento">' +
             '<div class="bento-col left">' + left + "</div>" +
@@ -141,13 +214,14 @@
 
   /* ---------- EXPERIENCE ---------- */
   function renderExperience(e) {
-    var entries = e.entries.map(function (en) {
+    var entries = e.entries.map(function (en, i) {
+      var root = "experience.entries[" + i + "]";
       return (
-        '<div class="entry">' +
-          '<div class="entry-date">' + esc(en.date) + "</div>" +
+        '<div class="entry" data-edit-root="' + root + '">' +
+          '<div class="entry-date" data-edit="experience.entries[' + i + '].date" data-edit-root="' + root + '">' + esc(en.date) + "</div>" +
           '<div class="entry-right">' +
-            '<div class="entry-title">' + esc(en.title) + "</div>" +
-            '<p class="entry-desc">' + esc(en.desc) + "</p>" +
+            '<div class="entry-title" data-edit="experience.entries[' + i + '].title" data-edit-root="' + root + '">' + esc(en.title) + "</div>" +
+            '<p class="entry-desc" data-edit="experience.entries[' + i + '].desc" data-edit-root="' + root + '">' + esc(en.desc) + "</p>" +
           "</div>" +
         "</div>"
       );
@@ -157,8 +231,8 @@
       '<section id="experience" class="section bg-light">' +
         '<div class="section-inner">' +
           '<div class="sec-header">' +
-            '<div class="sec-eyebrow">' + esc(e.eyebrow) + "</div>" +
-            '<h2 class="sec-heading">' + esc(e.heading) + "</h2>" +
+            '<div class="sec-eyebrow" data-edit="experience.eyebrow">' + esc(e.eyebrow) + "</div>" +
+            '<h2 class="sec-heading" data-edit="experience.heading">' + esc(e.heading) + "</h2>" +
           "</div>" +
           '<div class="timeline">' + entries + "</div>" +
         "</div>" +
@@ -217,17 +291,19 @@
     );
   }
 
-  function renderProjectCard(it) {
+  function renderProjectCard(it, i) {
     var isVideo = it.media && it.media.type === "video";
     var placeholderTag = it.placeholder ? '<span class="proj-placeholder">示例素材</span>' : "";
+    var idx = (typeof i === "number") ? i : 0;
+    var root = "projects.items[" + idx + "]";
     return (
-      '<article class="proj-card' + (isVideo ? " has-video" : " has-images") + '">' +
+      '<article class="proj-card' + (isVideo ? " has-video" : " has-images") + '" data-project-index="' + idx + '" data-edit-root="' + root + '">' +
         placeholderTag +
-        '<div class="proj-media">' + renderMedia(it.media) + "</div>" +
+        '<div class="proj-media" data-project-index="' + idx + '" data-media-path="' + root + '.media">' + renderMedia(it.media) + "</div>" +
         '<a class="proj-text" href="' + esc(it.link || "#") + '">' +
-          '<div class="proj-title">' + esc(it.title) + "</div>" +
-          '<div class="proj-tags">' + esc(it.tags) + "</div>" +
-          '<p class="proj-outcome">' + esc(it.outcome) + "</p>" +
+          '<div class="proj-title" data-edit="projects.items[' + idx + '].title" data-edit-root="' + root + '">' + esc(it.title) + "</div>" +
+          '<div class="proj-tags" data-edit="projects.items[' + idx + '].tags" data-edit-root="' + root + '">' + esc(it.tags) + "</div>" +
+          '<p class="proj-outcome" data-edit="projects.items[' + idx + '].outcome" data-edit-root="' + root + '">' + esc(it.outcome) + "</p>" +
         "</a>" +
       "</article>"
     );
@@ -236,11 +312,12 @@
   function renderProjects(pr) {
     var limit = typeof pr.featuredLimit === "number" ? pr.featuredLimit : pr.items.length;
     var featured = pr.items.slice(0, limit);
-    var cards = featured.map(renderProjectCard).join("");
+    var cards = featured.map(function (it, i) { return renderProjectCard(it, i); }).join("");
 
     var hasMore = pr.items.length > limit;
-    var more = hasMore && pr.moreUrl
-      ? '<a href="' + esc(pr.moreUrl) + '" class="projects-link">' + esc(pr.moreText || "查看更多 →") + "</a>"
+    var moreUrl = hasMore && pr.moreUrl ? (pr.moreUrl + editorQs()) : "";
+    var more = moreUrl
+      ? '<a href="' + esc(moreUrl) + '" class="projects-link">' + esc(pr.moreText || "查看更多 →") + "</a>"
       : "";
 
     return (
@@ -258,7 +335,7 @@
   }
 
   function renderProjectsPage(pr, profile) {
-    var allCards = pr.items.map(renderProjectCard).join("");
+    var allCards = pr.items.map(function (it, i) { return renderProjectCard(it, i); }).join("");
     return (
       '<div class="page-projects">' +
         '<div class="wrap">' +
@@ -272,7 +349,7 @@
             "</div>" +
             '<div class="proj-grid">' + allCards + "</div>" +
             '<div class="projects-page-actions">' +
-              '<a href="index.html" class="btn btn-ghost">← 返回首页</a>' +
+              '<a href="index.html' + editorQs() + '" class="btn btn-ghost">← 返回首页</a>' +
             "</div>" +
           "</div>" +
         "</main>" +
@@ -283,19 +360,20 @@
 
   /* ---------- CONTACT ---------- */
   function renderContact(c) {
-    var socials = c.socials.map(function (s) {
-      return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + esc(s.label) + "</a>";
+    var socials = c.socials.map(function (s, i) {
+      var root = "contact.socials[" + i + "]";
+      return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener" data-edit="contact.socials[' + i + '].label" data-edit-root="' + root + '">' + esc(s.label) + "</a>";
     }).join("");
     return (
       '<section id="contact" class="contact bg-dark">' +
         '<div class="contact-inner">' +
           '<div class="contact-header">' +
-            '<div class="sec-eyebrow">' + esc(c.eyebrow) + "</div>" +
-            '<h2 class="contact-heading">' + esc(c.heading) + "</h2>" +
+            '<div class="sec-eyebrow" data-edit="contact.eyebrow">' + esc(c.eyebrow) + "</div>" +
+            '<h2 class="contact-heading" data-edit="contact.heading">' + esc(c.heading) + "</h2>" +
           "</div>" +
-          '<p class="contact-body">' + esc(c.body) + "</p>" +
+          '<p class="contact-body" data-edit="contact.body">' + esc(c.body) + "</p>" +
           '<div class="email-row">' +
-            '<span class="email">' + esc(c.email) + "</span>" +
+            '<span class="email" data-edit="contact.email">' + esc(c.email) + "</span>" +
             '<a href="mailto:' + esc(c.email) + '" class="email-btn">发送邮件</a>' +
           "</div>" +
           '<div class="social-row">' + socials + "</div>" +
@@ -308,8 +386,8 @@
   function renderFooter(f) {
     return (
       '<footer class="footer">' +
-        '<div class="footer-left">' + esc(f.left) + "</div>" +
-        '<div class="footer-right">' + esc(f.right) + "</div>" +
+        '<div class="footer-left" data-edit="profile.footer.left">' + esc(f.left) + "</div>" +
+        '<div class="footer-right" data-edit="profile.footer.right">' + esc(f.right) + "</div>" +
       "</footer>"
     );
   }
@@ -415,9 +493,13 @@
   }
 
   function setupProjectControls() {
-    document.querySelectorAll(".proj-card").forEach(function (card) {
-      var media = card.querySelector(".proj-media");
-      var video = card.querySelector(".proj-video");
+    document.querySelectorAll(".proj-card").forEach(setupProjectControlsForCard);
+  }
+
+  function setupProjectControlsForCard(card) {
+    if (!card) return;
+    var media = card.querySelector(".proj-media");
+    var video = card.querySelector(".proj-video");
       var imgsWrap = card.querySelector(".proj-imgs");
       var leftBtn = card.querySelector(".left-ctrl");
       var rightBtn = card.querySelector(".right-ctrl");
@@ -523,7 +605,6 @@
         // 点击图片本身在窗口内放大查看
         imgsWrap.addEventListener("click", function (e) { e.stopPropagation(); openCurrentLightbox(); });
       }
-    });
   }
 
   /* ---------- 交互：返回顶部 ---------- */
@@ -578,11 +659,486 @@
     });
   }
 
+  /* ---------- 编辑模式：?editor 时启用，单代码库，在原位改内容 ---------- */
+  function setupInlineEditor() {
+    var isProjectsPage = document.getElementById("app") && document.getElementById("app").getAttribute("data-page") === "projects";
+    var targets = [
+      { key: "profile",    header: ".hero .hero-left",        root: ".hero", addArray: "profile.hero.techTags", addDefault: "新标签" },
+      { key: "profile",    header: ".footer",                 root: ".footer" },
+      { key: "about",      header: "#about .about-left",      root: "#about", addArray: "about.stats", addDefault: { num: "0", label: "新指标", mono: false } },
+      { key: "skills",     header: "#skills .sec-header",     root: "#skills", addArray: "skills.cards", addDefault: { label: "NEW", title: "新技能", line: "描述" } },
+      { key: "experience", header: "#experience .sec-header", root: "#experience", addArray: "experience.entries", addDefault: { date: "20xx", title: "新经历", desc: "描述" } },
+      { key: "projects",   header: isProjectsPage ? ".projects-main .sec-header" : "#projects .sec-header", root: isProjectsPage ? ".projects-main" : "#projects", addArray: "projects.items", addDefault: { title: "新项目", tags: "Tag", outcome: "描述", link: "#", placeholder: true, media: { type: "images", sources: ["assets/projects/t1.png"] } } },
+      { key: "contact",    header: "#contact .contact-header", root: "#contact", addArray: "contact.socials", addDefault: { label: "新链接", url: "#" } }
+    ];
+
+    var active = null; // { rootEl, key, originalData, originalTexts, deleteRoots }
+
+    function stopAllLinksInEdit(e) {
+      var t = e.target;
+      if (t.closest && (
+        t.closest("a.proj-text") ||
+        t.closest(".social-row a") ||
+        t.closest(".email-btn")
+      )) {
+        // 允许文件选择器正常工作
+        if (t.tagName === "INPUT" && t.type === "file") return;
+        e.preventDefault();
+      }
+    }
+    document.addEventListener("click", stopAllLinksInEdit, true);
+
+    function exitOthers(currentRoot) {
+      if (!active) return;
+      if (active.rootEl === currentRoot) return;
+      cancelModule(active);
+    }
+
+    function makeEditable(rootEl) {
+      rootEl.querySelectorAll("[data-edit]").forEach(function (el) {
+        el.setAttribute("contenteditable", "true");
+      });
+    }
+
+    function makeReadonly(rootEl) {
+      rootEl.querySelectorAll("[data-edit]").forEach(function (el) {
+        el.removeAttribute("contenteditable");
+      });
+    }
+
+    function addDeleteButtons(rootEl, t) {
+      var container = rootEl;
+      var handles = [];
+      container.querySelectorAll("[data-edit]").forEach(function (el) {
+        var rootPath = el.getAttribute("data-edit-root");
+        if (!rootPath) return;
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ed-delete";
+        btn.setAttribute("aria-label", "删除");
+        btn.setAttribute("contenteditable", "false");
+        btn.setAttribute("tabindex", "-1");
+        btn.innerHTML = "×";
+        btn.setAttribute("data-delete-root", rootPath);
+        // 把删除按钮放到元素内部右上角，避免绝对定位受父级影响
+        el.style.position = "relative";
+        el.appendChild(btn);
+        handles.push({ el: el, btn: btn });
+      });
+      return handles;
+    }
+
+    function removeDeleteButtons(handles) {
+      handles.forEach(function (h) {
+        if (h.btn.parentNode) h.btn.parentNode.removeChild(h.btn);
+      });
+    }
+
+    function markRootDeleted(rootEl, rootPath, delSet) {
+      delSet.add(rootPath);
+      rootEl.querySelectorAll('[data-edit-root="' + rootPath + '"]').forEach(function (el) {
+        el.classList.add("ed-deleted");
+      });
+    }
+
+    function unmarkAllDeleted(rootEl) {
+      rootEl.querySelectorAll(".ed-deleted").forEach(function (el) {
+        el.classList.remove("ed-deleted");
+      });
+    }
+
+    function buildProjectsMediaEditor(rootEl) {
+      var editors = [];
+      rootEl.querySelectorAll(".proj-card").forEach(function (card) {
+        var idx = parseInt(card.getAttribute("data-project-index"), 10);
+        if (isNaN(idx)) return;
+        var mediaEl = card.querySelector(".proj-media");
+        if (!mediaEl) return;
+        var item = getByPath(window.SITE_DATA, "projects.items[" + idx + "]");
+        if (!item) return;
+
+        var overlay = document.createElement("div");
+        overlay.className = "proj-media-editor";
+        var rootPath = card.getAttribute("data-edit-root");
+
+        function updateOverlay() {
+          var html = '<div class="pme-title">项目素材</div>';
+          if (item.media && item.media.type === "video") {
+            html +=
+              '<label class="pme-row">' +
+                '<span>替换视频</span>' +
+                '<input type="file" accept="video/mp4" data-pme-action="video" data-pme-idx="' + idx + '">' +
+              '</label>' +
+              '<div class="pme-filename">' + (item.media.src || "") + "</div>" +
+              '<label class="pme-row">' +
+                '<span>替换封面</span>' +
+                '<input type="file" accept="image/*" data-pme-action="poster" data-pme-idx="' + idx + '">' +
+              '</label>' +
+              '<div class="pme-filename">' + (item.media.poster || "") + "</div>";
+          } else {
+            var imgs = (item.media && item.media.sources) || [];
+            html += '<div class="pme-thumbs">';
+            imgs.forEach(function (src, i) {
+              html +=
+                '<div class="pme-thumb" data-thumb-idx="' + i + '" data-project-idx="' + idx + '">' +
+                  '<img src="' + esc(src) + '" alt="">' +
+                  '<button type="button" class="pme-thumb-del" data-thumb-idx="' + i + '" data-project-idx="' + idx + '">×</button>' +
+                "</div>";
+            });
+            html += "</div>";
+            html +=
+              '<label class="pme-row">' +
+                '<span>添加图片</span>' +
+                '<input type="file" accept="image/*" multiple data-pme-action="images" data-pme-idx="' + idx + '">' +
+              '</label>';
+          }
+          html +=
+            '<button type="button" class="pme-delete-project" data-delete-root="' + (rootPath || "") + '">' +
+              '删除整个项目' +
+            '</button>';
+          overlay.innerHTML = html;
+          bindOverlay(overlay);
+        }
+
+        function bindOverlay(overlay) {
+          overlay.querySelectorAll('input[type="file"]').forEach(function (input) {
+            input.addEventListener("change", function () {
+              var action = input.getAttribute("data-pme-action");
+              var pidx = parseInt(input.getAttribute("data-pme-idx"), 10);
+              var files = Array.from(input.files || []);
+              if (!files.length) return;
+              uploadFiles(files, action, pidx, updateOverlay);
+              input.value = "";
+            });
+          });
+          overlay.querySelectorAll(".pme-thumb-del").forEach(function (btn) {
+            btn.addEventListener("click", function (e) {
+              e.stopPropagation();
+              var pidx = parseInt(btn.getAttribute("data-project-idx"), 10);
+              var thumbIdx = parseInt(btn.getAttribute("data-thumb-idx"), 10);
+              var itm = getByPath(window.SITE_DATA, "projects.items[" + pidx + "]");
+              if (itm && itm.media && Array.isArray(itm.media.sources)) {
+                itm.media.sources.splice(thumbIdx, 1);
+                refreshProjectCardMedia(card, itm);
+                updateOverlay();
+              }
+            });
+          });
+          overlay.querySelectorAll(".pme-delete-project").forEach(function (btn) {
+            btn.addEventListener("click", function (e) {
+              e.stopPropagation();
+              var r = btn.getAttribute("data-delete-root");
+              if (active && r) markRootDeleted(rootEl, r, active.deleteRoots);
+            });
+          });
+        }
+
+        updateOverlay();
+        mediaEl.appendChild(overlay);
+        editors.push({ mediaEl: mediaEl, overlay: overlay });
+      });
+      return editors;
+    }
+
+    function refreshProjectCardMedia(card, item) {
+      var mediaEl = card.querySelector(".proj-media");
+      if (!mediaEl) return;
+      var overlay = mediaEl.querySelector(".proj-media-editor");
+      mediaEl.innerHTML = renderMedia(item.media);
+      if (overlay) mediaEl.appendChild(overlay);
+      setupProjectControlsForCard(card);
+    }
+
+    function uploadFiles(files, action, pidx, done) {
+      var itm = getByPath(window.SITE_DATA, "projects.items[" + pidx + "]");
+      if (!itm) return;
+      var pending = files.length;
+      var uploaded = [];
+      files.forEach(function (file) {
+        var fd = new FormData();
+        fd.append("file", file);
+        fetch("/api/upload", { method: "POST", body: fd })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (j.ok) uploaded.push(j.url);
+            pending--;
+            if (pending === 0) {
+              applyUploadedMedia(action, itm, uploaded);
+              var card = document.querySelector('.proj-card[data-project-index="' + pidx + '"]');
+              if (card) refreshProjectCardMedia(card, itm);
+              if (done) done();
+            }
+          })
+          .catch(function () {
+            pending--;
+            if (pending === 0) {
+              applyUploadedMedia(action, itm, uploaded);
+              var card = document.querySelector('.proj-card[data-project-index="' + pidx + '"]');
+              if (card) refreshProjectCardMedia(card, itm);
+              if (done) done();
+            }
+          });
+      });
+    }
+
+    function applyUploadedMedia(action, item, urls) {
+      if (!urls.length) return;
+      if (action === "video") {
+        item.media = item.media || {};
+        item.media.type = "video";
+        item.media.src = urls[0];
+        if (!item.media.poster) item.media.poster = "";
+      } else if (action === "poster") {
+        item.media = item.media || {};
+        if (item.media.type !== "video") item.media.type = "video";
+        item.media.poster = urls[0];
+      } else if (action === "images") {
+        if (!item.media || item.media.type !== "images") {
+          item.media = { type: "images", sources: [] };
+        }
+        item.media.sources = (item.media.sources || []).concat(urls);
+      }
+    }
+
+    function collectDeletions(rootEl) {
+      function elText(el) {
+        var clone = el.cloneNode(true);
+        var d = clone.querySelector(".ed-delete");
+        if (d && d.parentNode) d.parentNode.removeChild(d);
+        return clone.textContent.trim();
+      }
+      var del = new Set();
+      // 显式被标记删除的 root
+      rootEl.querySelectorAll(".ed-deleted").forEach(function (el) {
+        var r = el.getAttribute("data-edit-root");
+        if (r) del.add(r);
+      });
+      // 单字段数组项被清空也视为删除
+      rootEl.querySelectorAll("[data-edit-root]").forEach(function (el) {
+        if (el.classList.contains("ed-deleted")) return;
+        var root = el.getAttribute("data-edit-root");
+        var path = el.getAttribute("data-edit");
+        if (!root || !path) return;
+        // 路径本身就是数组项根：如 profile.hero.techTags[0]
+        if (path === root && elText(el) === "") del.add(root);
+      });
+      // 多字段数组项：所有可见字段都为空则删除整个项（项目除外，避免误删媒体）
+      var roots = {};
+      rootEl.querySelectorAll("[data-edit-root]").forEach(function (el) {
+        if (el.classList.contains("ed-deleted")) return;
+        var root = el.getAttribute("data-edit-root");
+        if (!roots[root]) roots[root] = [];
+        roots[root].push(el);
+      });
+      Object.keys(roots).forEach(function (root) {
+        if (root.indexOf("projects.items[") === 0) return;
+        var els = roots[root];
+        var allEmpty = els.every(function (el) { return elText(el) === ""; });
+        if (allEmpty) del.add(root);
+      });
+      return del;
+    }
+
+    function cleanTextOf(el) {
+      var clone = el.cloneNode(true);
+      var d = clone.querySelector(".ed-delete");
+      if (d && d.parentNode) d.parentNode.removeChild(d);
+      return clone.textContent.replace(/\u00d7/g, "").trim();
+    }
+
+    function saveModule(t, rootEl, delSet) {
+      var dataKey = t.key;
+      // 先应用文本改动（排除已删除的 root），并去掉删除按钮的“×”字符
+      rootEl.querySelectorAll("[data-edit]").forEach(function (el) {
+        if (el.classList.contains("ed-deleted")) return;
+        var root = el.getAttribute("data-edit-root");
+        if (root && delSet.has(root)) return;
+        setByPath(window.SITE_DATA, el.getAttribute("data-edit"), cleanTextOf(el));
+      });
+      // 再删除数组项
+      if (delSet.size) removeArrayRoots(window.SITE_DATA, Array.from(delSet));
+
+      return fetch("/api/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: dataKey, data: window.SITE_DATA[dataKey] })
+      }).then(function (r) { return r.json(); });
+    }
+
+    function cancelModule(state) {
+      if (!state) return;
+      // 恢复数据
+      window.SITE_DATA[state.key] = deepClone(state.originalData);
+      // 恢复文本
+      state.rootEl.querySelectorAll("[data-edit]").forEach(function (el) {
+        var path = el.getAttribute("data-edit");
+        if (state.originalTexts.hasOwnProperty(path)) {
+          el.textContent = state.originalTexts[path];
+        }
+      });
+      // 恢复项目媒体显示
+      if (state.key === "projects") {
+        state.rootEl.querySelectorAll(".proj-card").forEach(function (card) {
+          var idx = parseInt(card.getAttribute("data-project-index"), 10);
+          var itm = getByPath(state.originalData, "items[" + idx + "]");
+          if (itm) refreshProjectCardMedia(card, itm);
+        });
+      }
+      cleanupState(state);
+      active = null;
+    }
+
+    function cleanupState(state) {
+      makeReadonly(state.rootEl);
+      removeDeleteButtons(state.handles);
+      unmarkAllDeleted(state.rootEl);
+      state.rootEl.classList.remove("editing");
+      if (state.mediaEditors) {
+        state.mediaEditors.forEach(function (ed) {
+          if (ed.overlay.parentNode) ed.overlay.parentNode.removeChild(ed.overlay);
+        });
+      }
+      state.toolbar.edit.style.display = "";
+      state.toolbar.save.style.display = "none";
+      state.toolbar.cancel.style.display = "none";
+      if (state.toolbar.add) state.toolbar.add.style.display = "none";
+    }
+
+    targets.forEach(function (t) {
+      var header = document.querySelector(t.header);
+      var root = document.querySelector(t.root);
+      if (!header || !root) return;
+      header.classList.add("ed-host");
+
+      var bar = document.createElement("div");
+      bar.className = "ed-toolbar";
+
+      function makeBtn(cls, text) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "ed-btn " + cls;
+        b.textContent = text;
+        return b;
+      }
+
+      var editBtn = makeBtn("ed-edit", "编辑");
+      var saveBtn = makeBtn("ed-save", "保存");
+      var cancelBtn = makeBtn("ed-cancel", "取消");
+      var addBtn = t.addArray ? makeBtn("ed-add", "+ 添加") : null;
+
+      saveBtn.style.display = "none";
+      cancelBtn.style.display = "none";
+      if (addBtn) addBtn.style.display = "none";
+
+      bar.appendChild(editBtn);
+      bar.appendChild(saveBtn);
+      bar.appendChild(cancelBtn);
+      if (addBtn) bar.appendChild(addBtn);
+      header.appendChild(bar);
+
+      var toolbar = { edit: editBtn, save: saveBtn, cancel: cancelBtn, add: addBtn };
+
+      editBtn.addEventListener("click", function () {
+        exitOthers(root);
+        var originalTexts = {};
+        root.querySelectorAll("[data-edit]").forEach(function (el) {
+          originalTexts[el.getAttribute("data-edit")] = el.textContent;
+        });
+
+        active = {
+          rootEl: root,
+          key: t.key,
+          originalData: deepClone(window.SITE_DATA[t.key]),
+          originalTexts: originalTexts,
+          toolbar: toolbar,
+          deleteRoots: new Set(),
+          handles: [],
+          mediaEditors: []
+        };
+
+        makeEditable(root);
+        root.classList.add("editing");
+        active.handles = addDeleteButtons(root, t);
+
+        active.handles.forEach(function (h) {
+          h.btn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            var r = h.btn.getAttribute("data-delete-root");
+            if (r) markRootDeleted(root, r, active.deleteRoots);
+          });
+        });
+
+        if (t.key === "projects") {
+          active.mediaEditors = buildProjectsMediaEditor(root);
+        }
+
+        editBtn.style.display = "none";
+        saveBtn.style.display = "";
+        cancelBtn.style.display = "";
+        if (addBtn) addBtn.style.display = "";
+      });
+
+      cancelBtn.addEventListener("click", function () {
+        if (active && active.rootEl === root) cancelModule(active);
+      });
+
+      saveBtn.addEventListener("click", function () {
+        if (!active || active.rootEl !== root) return;
+        var delSet = collectDeletions(root);
+        saveBtn.disabled = true;
+        saveBtn.textContent = "保存中…";
+        saveModule(t, root, delSet)
+          .then(function (j) {
+            if (j.ok) {
+              location.reload();
+            } else {
+              alert("保存失败：" + (j.error || "未知错误"));
+              saveBtn.disabled = false;
+              saveBtn.textContent = "保存";
+            }
+          })
+          .catch(function (e2) {
+            alert("保存失败：" + e2.message);
+            saveBtn.disabled = false;
+            saveBtn.textContent = "保存";
+          });
+      });
+
+      if (addBtn) {
+        addBtn.addEventListener("click", function () {
+          var arr = getByPath(window.SITE_DATA, t.addArray);
+          if (!Array.isArray(arr)) return;
+          arr.push(deepClone(t.addDefault));
+          addBtn.disabled = true;
+          addBtn.textContent = "添加中…";
+          fetch("/api/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: t.key, data: window.SITE_DATA[t.key] })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+              if (j.ok) location.reload();
+              else { alert("添加失败：" + (j.error || "未知错误")); addBtn.disabled = false; addBtn.textContent = "+ 添加"; }
+            })
+            .catch(function (e2) { alert("添加失败：" + e2.message); addBtn.disabled = false; addBtn.textContent = "+ 添加"; });
+        });
+      }
+    });
+  }
+
   /* ---------- 启动 ---------- */
   function init() {
     var D = window.SITE_DATA || {};
     var root = document.getElementById("app");
     if (!root || !D.profile) return;
+
+    var EDITOR = false;
+    try {
+      var params = new URLSearchParams(location.search);
+      EDITOR = params.has("editor");
+    } catch (e) {}
+    if (EDITOR) document.body.classList.add("editor-mode");
 
     var savedTheme = "dark";
     try { savedTheme = localStorage.getItem("site-theme") || "dark"; } catch (e) {}
@@ -600,6 +1156,7 @@
       setupProjectControls();
       setupBackToTop();
       setupNavScroll();
+      if (EDITOR) setupInlineEditor();
       return;
     }
 
@@ -618,6 +1175,7 @@
     setupProjectControls();
     setupBackToTop();
     setupNavScroll();
+    if (EDITOR) setupInlineEditor();
   }
 
   if (document.readyState === "loading") {

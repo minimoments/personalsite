@@ -6,12 +6,28 @@
 window.SITE_DATA = window.SITE_DATA || {};
 
 SITE_DATA.skills = {
-  eyebrow: "技能栈",
-  heading: "主要技术领域与日常工具",
-  cards: [
-    { label: "01 ENGINE",  title: "引擎与渲染",   line: "Unity · URP / HDRP · Shader Graph · DOTS · GPU Instancing" },
-    { label: "03 NETWORK", title: "网络与服务端", line: "Netcode for GameObjects · WebSocket · gRPC · Redis · Kubernetes" },
-    { label: "02 LANGUAGE",title: "编程语言",     line: "C# · C++ · Go · Python · Lua" },
-    { label: "04 TOOLS",   title: "工具链",       line: "Git · Rider · Jenkins · Profiler · Docker" }
+  "eyebrow": "技能栈",
+  "heading": "主要技术领域与日常工具",
+  "cards": [
+    {
+      "label": "01 ENGINE",
+      "title": "引擎与渲染",
+      "line": "Unity · URP / HDRP · Shader Graph · DOTS · GPU Instancing"
+    },
+    {
+      "label": "03 NETWORK",
+      "title": "网络与服务端",
+      "line": "Netcode for GameObjects · WebSocket · gRPC · Redis · Kubernetes"
+    },
+    {
+      "label": "02 LANGUAGE",
+      "title": "编程语言",
+      "line": "C# · C++ · Go · Python · Lua"
+    },
+    {
+      "label": "04 TOOLS",
+      "title": "工具链",
+      "line": "Git · Rider · Jenkins · Profiler · Docker"
+    }
   ]
 };

@@ -262,6 +262,7 @@ section[id]{scroll-margin-top:80px;}
 .page-projects{min-height:100vh;display:flex;flex-direction:column;}
 .page-projects > .wrap{padding-top:24px;padding-bottom:24px;}
 .projects-main{flex:1;padding:112px 0 64px;background:var(--bg-light);}
+.theme-dark .projects-main{background:var(--bg-dark);}
 .page-projects .sec-header{margin-bottom:40px;}
 .projects-page-actions{margin-top:24px;}
 
@@ -444,3 +445,97 @@ section[id]{scroll-margin-top:80px;}
 .lightbox-next{right:20px;top:50%;transform:translateY(-50%);}
 .lightbox-close:hover,.lightbox-prev:hover,.lightbox-next:hover{background:rgba(255,255,255,0.22);border-color:rgba(255,255,255,0.4);}
 .lightbox-close svg,.lightbox-prev svg,.lightbox-next svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;}
+
+/* ============ 编辑模式 (?editor) ============ */
+.ed-host{position:relative;}
+.ed-toolbar{position:absolute;top:0;right:0;display:flex;gap:8px;z-index:6;}
+.footer.ed-host .ed-toolbar{top:50%;transform:translateY(-50%);}
+
+.ed-btn{
+  font:inherit;font-size:13px;font-weight:600;line-height:1;
+  border:1px solid var(--accent);color:var(--accent);background:transparent;
+  border-radius:999px;padding:6px 14px;cursor:pointer;transition:all .15s;
+}
+.ed-btn:hover{background:var(--accent);color:#fff;}
+.ed-btn.ed-save{background:var(--accent);color:#fff;}
+.ed-btn.ed-save:hover{opacity:.9;}
+.ed-btn:disabled{opacity:.6;cursor:default;}
+
+body.editor-mode [data-edit]{cursor:default;position:relative;}
+body.editor-mode [data-edit]:hover{outline:1px dashed var(--accent);outline-offset:3px;border-radius:4px;}
+[data-edit][contenteditable="true"]{cursor:text;outline:2px dashed var(--accent);outline-offset:3px;border-radius:4px;}
+[data-edit][contenteditable="true"]:focus{background:rgba(59,111,224,.10);outline-color:var(--accent);}
+
+/* 删除小按钮 */
+.ed-delete{
+  position:absolute;top:-8px;right:-8px;z-index:10;
+  width:20px;height:20px;border-radius:50%;
+  background:#ff4d4f;color:#fff;border:none;
+  font-size:14px;line-height:1;display:inline-flex;
+  align-items:center;justify-content:center;
+  cursor:pointer;opacity:0;visibility:hidden;
+  transition:opacity .15s,visibility .15s,transform .15s;
+}
+.editing [data-edit-root]:hover .ed-delete,
+.editing [data-edit-root]:focus .ed-delete,
+.editing [data-edit-root]:focus-within .ed-delete{
+  opacity:1;visibility:visible;
+}
+.ed-delete:hover{background:#ff7875;transform:scale(1.1);}
+
+/* 已标记删除的元素 */
+.ed-deleted{opacity:.25;pointer-events:none;text-decoration:line-through;}
+.ed-deleted .ed-delete{display:none;}
+
+/* 模块正在编辑时高亮边框 */
+.editing{position:relative;}
+.editing::before{
+  content:"";position:absolute;inset:-8px;z-index:0;
+  border:1px dashed rgba(59,111,224,.35);border-radius:12px;pointer-events:none;
+}
+
+/* 项目媒体编辑器浮层 */
+.proj-media{position:relative;}
+.proj-media-editor{
+  position:absolute;inset:0;z-index:8;
+  background:rgba(10,10,11,.88);backdrop-filter:blur(4px);
+  display:flex;flex-direction:column;gap:10px;
+  padding:14px;color:#fff;overflow:auto;
+  opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;
+}
+.editing .proj-media:hover .proj-media-editor,
+.editing .proj-media:focus-within .proj-media-editor{
+  opacity:1;visibility:visible;
+}
+.pme-title{font-size:13px;font-weight:600;color:var(--accent);}
+.pme-row{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  font-size:13px;cursor:pointer;
+}
+.pme-row span{white-space:nowrap;}
+.pme-row input[type="file"]{font-size:12px;max-width:160px;color:#fff;}
+.pme-filename{font-size:11px;color:var(--text-mute);word-break:break-all;line-height:1.4;}
+.pme-thumbs{display:flex;flex-wrap:wrap;gap:8px;}
+.pme-thumb{position:relative;width:56px;height:56px;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,.2);}
+.pme-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.pme-thumb-del{
+  position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;
+  background:#ff4d4f;color:#fff;border:none;font-size:12px;line-height:1;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.pme-thumb-del:hover{background:#ff7875;}
+.pme-delete-project{
+  margin-top:8px;
+  align-self:flex-start;
+  font:inherit;font-size:12px;font-weight:600;
+  padding:6px 10px;border-radius:6px;
+  background:#ff4d4f;color:#fff;border:none;cursor:pointer;
+  transition:background .2s;
+}
+.pme-delete-project:hover{background:#ff7875;}
+
+/* 浅色主题下的编辑器适配 */
+.theme-light .ed-delete{background:#ff4d4f;}
+.theme-light .proj-media-editor{background:rgba(250,250,250,.95);color:var(--text-heading);}
+.theme-light .pme-row input[type="file"]{color:var(--text-body);}
+.theme-light .pme-filename{color:var(--text-mute);}

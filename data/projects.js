@@ -22,77 +22,135 @@
 window.SITE_DATA = window.SITE_DATA || {};
 
 SITE_DATA.projects = {
-  eyebrow: "项目",
-  heading: "精选项目",
-  pageHeading: "全部项目",
-  moreText: "查看更多项目 →",
-  moreUrl: "projects.html", // “查看更多项目”指向的地址
-  featuredLimit: 6,         // 首页精选项目最多显示几个；超过则显示“查看更多项目”
-
-  items: [
+  "eyebrow": "项目",
+  "heading": "精选项目",
+  "pageHeading": "全部项目",
+  "moreText": "查看更多项目 →",
+  "moreUrl": "projects.html",
+  "featuredLimit": 6,
+  "items": [
     {
-      title: "星海防线",
-      tags: "Unity · Netcode · URP",
-      outcome: "上线首月 DAU 1.2万，负责核心战斗与 8~16 人实时对局的网络同步。",
-      link: "#",
-      placeholder: true,
-      media: { type: "video", src: "assets/projects/demo.mp4", poster: "assets/projects/t1.png" }
+      "title": "星海防线",
+      "tags": "Unity · Netcode · URP",
+      "outcome": "上线首月 DAU 1.2万，负责核心战斗与 8~16 人实时对局的网络同步。",
+      "link": "#",
+      "placeholder": true,
+      "media": {
+        "type": "video",
+        "src": "assets/projects/demo.mp4",
+        "poster": "assets/projects/t1.png"
+      }
     },
     {
-      title: "城市漂移",
-      tags: "Unity · URP · Shader Graph",
-      outcome: "移动端竞速项目，负责渲染管线与后处理，双端累计下载量 45万+。",
-      link: "#",
-      placeholder: true,
-      media: { type: "images", sources: ["assets/projects/t1.png", "assets/projects/t2.png", "assets/projects/t3.png", "assets/projects/t4.png", "assets/projects/t5.png"] }
+      "title": "城市漂移",
+      "tags": "Unity · URP · Shader Graph",
+      "outcome": "移动端竞速项目，负责渲染管线与后处理，双端累计下载量 45万+。",
+      "link": "#",
+      "placeholder": true,
+      "media": {
+        "type": "images",
+        "sources": [
+          "assets/projects/t1.png",
+          "assets/projects/t2.png",
+          "assets/projects/t3.png",
+          "assets/projects/t4.png",
+          "assets/projects/t5.png"
+        ]
+      }
     },
     {
-      title: "MatchCore",
-      tags: "Go · Redis · Kafka",
-      outcome: "自研游戏匹配服务，峰值 2万 同时在线，平均匹配耗时 < 500ms。",
-      link: "#",
-      placeholder: true,
-      media: { type: "images", sources: ["assets/projects/t6.png", "assets/projects/t7.png"] }
+      "title": "MatchCore",
+      "tags": "Go · Redis · Kafka",
+      "outcome": "自研游戏匹配服务，峰值 2万 同时在线，平均匹配耗时 < 500ms。",
+      "link": "#",
+      "placeholder": true,
+      "media": {
+        "type": "images",
+        "sources": [
+          "assets/projects/t6.png",
+          "assets/projects/t7.png"
+        ]
+      }
     },
     {
-      title: "深空漫游",
-      tags: "Unity · HDRP · DOTS",
-      outcome: "太空探索 Demo，使用 DOTS 实现万级小行星的 GPU 实例化渲染。",
-      link: "#",
-      placeholder: true,
-      media: { type: "video", src: "assets/projects/demo.mp4", poster: "assets/projects/t4.png" }
+      "title": "深空漫游",
+      "tags": "Unity · HDRP · DOTS",
+      "outcome": "太空探索 Demo，使用 DOTS 实现万级小行星的 GPU 实例化渲染。",
+      "link": "#",
+      "placeholder": true,
+      "media": {
+        "type": "video",
+        "src": "assets/projects/demo.mp4",
+        "poster": "assets/projects/t4.png"
+      }
     },
     {
-      title: "极地生存",
-      tags: "Unity · URP · Netcode",
-      outcome: "多人合作生存玩法，负责断线重连与状态校验，弱网下体验稳定。",
-      link: "#",
-      placeholder: true,
-      media: { type: "images", sources: ["assets/projects/t2.png", "assets/projects/t5.png"] }
+      "title": "极地生存",
+      "tags": "Unity · URP · Netcode",
+      "outcome": "多人合作生存玩法，负责断线重连与状态校验，弱网下体验稳定。",
+      "link": "#",
+      "placeholder": true,
+      "media": {
+        "type": "images",
+        "sources": [
+          "assets/projects/t2.png",
+          "assets/projects/t5.png"
+        ]
+      }
     },
     {
-      title: "像素工坊框架",
-      tags: "C# · Editor Tool",
-      outcome: "内部 UI 与战斗框架，被 3 款项目复用，新功能开发效率提升约 40%。",
-      link: "#",
-      placeholder: true,
-      media: { type: "images", sources: ["assets/projects/t3.png", "assets/projects/t6.png", "assets/projects/t7.png"] }
+      "title": "像素工坊框架",
+      "tags": "C# · Editor Tool",
+      "outcome": "内部 UI 与战斗框架，被 3 款项目复用，新功能开发效率提升约 40%。",
+      "link": "#",
+      "placeholder": true,
+      "media": {
+        "type": "images",
+        "sources": [
+          "assets/projects/t3.png",
+          "assets/projects/t6.png",
+          "assets/projects/t7.png"
+        ]
+      }
     },
     {
-      title: "关卡编辑器 Pro",
-      tags: "Unity · Editor Tool · Odin",
-      outcome: "可视化关卡流程编辑工具，支持节点图配置与运行时热重载，策划工作效率提升 3 倍。",
-      link: "#",
-      placeholder: true,
-      media: { type: "images", sources: ["assets/projects/t1.png", "assets/projects/t4.png"] }
+      "title": "关卡编辑器 Pro",
+      "tags": "Unity · Editor Tool · Odin",
+      "outcome": "可视化关卡流程编辑工具，支持节点图配置与运行时热重载，策划工作效率提升 3 倍。",
+      "link": "#",
+      "placeholder": true,
+      "media": {
+        "type": "images",
+        "sources": [
+          "assets/projects/t1.png",
+          "assets/projects/t4.png"
+        ]
+      }
     },
     {
-      title: "实时对战服务端",
-      tags: "Go · gRPC · Kubernetes",
-      outcome: "无状态战斗房间服务，支持水平扩容，峰值承载 5000 同时在线对局。",
-      link: "#",
-      placeholder: true,
-      media: { type: "video", src: "assets/projects/demo.mp4", poster: "assets/projects/t5.png" }
+      "title": "实时对战服务端",
+      "tags": "Go · gRPC · Kubernetes",
+      "outcome": "无状态战斗房间服务，支持水平扩容，峰值承载 5000 同时在线对局。",
+      "link": "#",
+      "placeholder": true,
+      "media": {
+        "type": "video",
+        "src": "assets/projects/demo.mp4",
+        "poster": "assets/projects/t5.png"
+      }
+    },
+    {
+      "title": "新项目",
+      "tags": "Tag",
+      "outcome": "描述",
+      "link": "#",
+      "placeholder": true,
+      "media": {
+        "type": "images",
+        "sources": [
+          "assets/projects/t1.png"
+        ]
+      }
     }
   ]
 };
